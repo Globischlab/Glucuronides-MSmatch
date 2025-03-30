@@ -15,7 +15,7 @@ output_dic <-
 ######### Parameter settings ##################
 ###############################################
 int_tresh <- 5 # remove MS2 peaks Int < 5%
-N <- 176.0321 # Neutral loss of glucuronid acid
+NL <- 176.0321 # Neutral loss of glucuronid acid
 proton <- 1.00728
 adduct <- "[M-H]-"
 

@@ -1,8 +1,9 @@
 ###############################################
 ### Load or install packages ##################
 ###############################################
-if (!require("RMariaDB")) install.packages("RMariaDB")
-library(RMariaDB)
+
+if (!require("here")) install.packages("here")
+library(here)
 
 if (!require("pander")) install.packages("pander")
 library(pander)
@@ -26,3 +27,14 @@ if (!require("AnnotationHub")) BiocManager::install("AnnotationHub")
 library(AnnotationHub)
 ah <- AnnotationHub()
 library(MsBackendMgf)
+
+
+# Set working directory to repo root
+setwd(here())
+# Verify
+print(paste("Working directory set to:", getwd()))
+if (!dir.exists(here("output"))) {
+  dir.create(here("output"))
+}
+# Save session info
+writeLines(capture.output(sessionInfo()), "session_info.txt")
