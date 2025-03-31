@@ -52,10 +52,8 @@ else {
     }
 }
 
-dp_tresh <- 0.7 # threashold for MS2 matching scores
-mz_ppm <- 5 # mz search tolerance
-parm_ms2 <- MatchForwardReverseParam(ppm = mz_ppm, requirePrecursor = FALSE,
-                           THRESHFUN = function(x) which(x >= dp_tresh)
+parm_ms2 <- MatchForwardReverseParam(ppm = 5, requirePrecursor = FALSE #TRUE,
+                           THRESHFUN = function(x) which(x >= 0.7)
                           #THRESHFUN = select_top_match
                            )
 
