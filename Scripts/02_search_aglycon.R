@@ -68,8 +68,8 @@ MS1_match <- function(df_match, df_db,parm2,mz_name){
     MS1_matched <- MS1_matched[!duplicated(MS1_matched$mz),]
     MS1_matched$ID <- seq.int(nrow(MS1_matched))
     MS1_matched <- MS1_matched[,c("mz","rt","target_mz","target_rt","ID","target_accession","target_exactmass","target_name","target_chemical_formula","ppm_error")]
-    write.csv2(MS1_matched, 
-           here(output, paste0("ms1mtch_", substitute(df_db),"_",substitute(df_match), ".csv")))
+    write.csv(MS1_matched, 
+           here("output", paste0("ms1mtch_", substitute(df_db),"_",substitute(df_match), ".csv")))
            
     return(MS1_matched)
 
