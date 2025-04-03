@@ -9,19 +9,17 @@ search_aglycon <- function(sps_ctrl,sps_ea,NL,polarity, adduct,parm) {
     # get precursor mz list from crt files
     spec_df_ea <- spectraData(sps_ea, c("msLevel","rtime","dataOrigin","precursorMz","scanIndex"))
     write.csv(spec_df_ea, here("output","sps_ea_table.csv"))
-    # get precursor mz list from crt file
-    sps_ctrl <- filterPrecursorMz(sps_ctrl, c((NL+15),1200))
     # retrive crt mass spectra as dataframe
     spec_df <- spectraData(sps_ctrl, c("msLevel","rtime","dataOrigin","precursorMz","scanIndex"))
     spec_df$aglycon_theo <- (spec_df$precursorMz-NL)
-    if(polarity == 1){# positive mode
-        spec_df$exactmass <-round(spec_df$aglycon_theo-proton,4)
-
-    } 
-    if(polarity == 0){# negative mode
-        spec_df$exactmass <-round(spec_df$aglycon_theo+proton,4)
+    spec_df$exactmass <- if(polarity == 1) {
+        round(spec_df$aglycon_theo - proton, 4)
+    } else if(polarity == 0) {
+        round(spec_df$aglycon_theo + proton, 4)
+    } else {
+        message("No polarity")
+        NA  # Return NA or handle missing case
     }
-    else{message("No polarity")}
     
     write.csv(spec_df,here("output", "sps_ctrl_table.csv"))
 
@@ -36,45 +34,76 @@ search_aglycon <- function(sps_ctrl,sps_ea,NL,polarity, adduct,parm) {
     return(mtches_aglycon)
 }
 
+# function for ms1 match
+MS1_match <- function(df_mtches, df_db,db_param,mz){
+    MS1_match <- matchValues(df_mtches, 
+                         df_db, 
+                         db_param, mzColname= mz)
+    MS1_matched <- matchedData(MS1_match)[whichQuery(MS1_match),]
+    MS1_matched <- MS1_matched[!is.na(MS1_matched$score),]
+    MS1_matched <- MS1_matched[order(MS1_matched$ppm_error,decreasing = FALSE),]
+    MS1_matched <- MS1_matched[!duplicated(MS1_matched$ID),]
+    MS1_matched$ID <- seq.int(nrow(MS1_matched))
+    return(MS1_matched)
+}
+
+
 # set parameters and apply to data
 proton <- 1.00728
 NL <- 176.0321 # Neutral loss of glucuronid acid
 adduct <- "[M+H]+"
 # Negative mode
 #adduct <- "[M-H]-" 
+
 parm <- Mass2MzParam(adducts = adduct,
                         tolerance = 0.005, ppm = 5)
 
 # Compare the mz of estimated aglycons to mz of aglycons after EA
 mtches_aglycon <- search_aglycon(sps_ctrl,sps_ea,NL ,polarity=1, adduct,parm)
 
+# clean up output
+df_mtches <- as.data.frame(mtches_aglycon)
+df_mtches <- df_mtches  %>%
+  select(rtime, precursorMz,
+  target_rtime,target_precursorMz,target_aglycon_theo,target_exactmass,
+  adduct,ppm_error,ID) %>%       # Select columns
+  rename(EA_rtime = rtime,          # Rename
+         EA_mz = precursorMz,
+         rtime = target_rtime,
+         mz = target_precursorMz,
+         ppm_aglycon = ppm_error
+         )
+write.csv(df_mtches, here("output","aglycon_match_cleanup.csv"))
+
+
 # Search mz in database -- MS1 match
+parm2 <- Mass2MzParam(adducts = adduct,
+                     tolerance = 0.001, ppm = 5)
+                     
 # with hmdb
 df_hmdb <- read.csv(here("data","databases","hmdb_cleanup_v02062023.csv"),header = TRUE, sep = ",")
 # with pubchem
-df_pubchem <- read.csv(here("data","databases","pubchem_glucuronides.csv"),header = TRUE，sep=",")
+df_pubchem <- read.csv(here("data","databases","PubChem_compound_text_glucuronide.csv"),header = TRUE, sep=",")
 
-parm2 <- Mass2MzParam(adducts = adduct,
-                     tolerance = 0.001, ppm = 5)
 
-MS1_match <- function(df_match, df_db,parm2,mz_name){
-    df_match <- df_match[,c("mz","rt","target_mz","target_rt")]#,"ID")]
-    MS1_match <- matchValues(df_match, 
-                         df_db, 
-                         parm2, mzColname= mz_name)
-    MS1_matched <- matchedData(MS1_match)[whichQuery(MS1_match),]
-    MS1_matched <- MS1_matched[!is.na(MS1_matched$score),]
-    MS1_matched <- MS1_matched[order(MS1_matched$ppm_error,decreasing = FALSE),]
-    MS1_matched <- MS1_matched[!duplicated(MS1_matched$mz),]
-    MS1_matched$ID <- seq.int(nrow(MS1_matched))
-    MS1_matched <- MS1_matched[,c("mz","rt","target_mz","target_rt","ID","target_accession","target_exactmass","target_name","target_chemical_formula","ppm_error")]
-    write.csv(MS1_matched, 
-           here("output", paste0("ms1mtch_", substitute(df_db),"_",substitute(df_match), ".csv")))
-           
-    return(MS1_matched)
 
-}
+# EA_mz for alycon match in hmdb
+df_ms1match_hmdb <- MS1_match(df_mtches,df_hmdb,parm2,"EA_mz")
+df_ms1match_hmdb <- df_ms1match_hmdb[,c("EA_rtime","EA_mz","rtime","mz","target_aglycon_theo","adduct","ppm_aglycon","ID",
+                                                   "target_accession", "target_exactmass","target_name","target_chemical_formula","ppm_error")]
+write.csv(df_ms1match_hmdb, 
+           here("output",  "mtches_aglycon_hmdb.csv"))
 
-df_ms1match_hmdb <- MS1_match(mtches_aglycon,df_hmdb,parm2, mz_name = "mz")
-df_ms1match_pubchem <- MS1_match(mtches_aglycon,df_pubchem ,parm2, mz_name = "target_mz")
-df_ms1match_gluco_hmdb <- MS1_match(mtches_aglycon,df_hmdb ,parm2, mz_name = "target_mz")
+
+# mz for glucuronides matches in pubchem and hmdb
+df_ms1match_pubchem <- MS1_match(df_mtches,df_pubchem ,parm2, "mz")
+write.csv(df_ms1match_pubchem, 
+           here("output",  "mtches_gluco_pubchem.csv"))
+
+df_ms1match_gluco_hmdb <- MS1_match(df_mtches,df_hmdb ,parm2, "mz")
+
+df_ms1match_gluco_hmdb <- df_ms1match_gluco_hmdb [,c("EA_rtime","EA_mz","rtime","mz","target_aglycon_theo","adduct","ppm_aglycon","ID",
+                                                   "target_accession", "target_exactmass","target_name","target_chemical_formula","ppm_error")]
+
+write.csv(df_ms1match_gluco_hmdb, 
+           here("output",  "mtches_gluco_hmdb.csv"))

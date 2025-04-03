@@ -17,14 +17,6 @@ library(pander)
 
 if (!require("devtools")) install.packages("devtools")
 
-if (!require("Spectra")) devtools::install_github("rformassspectrometry/Spectra")
-library(Spectra)
-
-if (!require("MetaboAnnotation")) devtools::install_github("rformassspectrometry/MetaboAnnotation")
-library(MetaboAnnotation)
-
-if (!require("MsBackendMassbank")) devtools::install_github("rformassspectrometry/MsBackendMassbank")
-library(MsBackendMassbank)
 
 if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
 if (!require("mzR")) BiocManager::install("mzR")
@@ -33,8 +25,24 @@ if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocMana
 if (!require("AnnotationHub")) BiocManager::install("AnnotationHub")
 library(AnnotationHub)
 ah <- AnnotationHub()
-library(MsBackendMgf)
 
+
+if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
+if (!require("Spectra")) BiocManager::install("Spectra")
+library(Spectra)
+
+if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
+if (!require("MetaboAnnotation")) BiocManager::install("MetaboAnnotation")
+library(MetaboAnnotation)
+
+if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
+if (!require("MsBackendMassbank")) BiocManager::install("MsBackendMassbank")
+library(MsBackendMassbank)
+
+if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
+if (!require("MsBackendMgf")) BiocManager::install("MsBackendMgf")
+library(MsBackendMgf)
+library(dplyr)
 
 # Set working directory to repo root
 setwd(here())

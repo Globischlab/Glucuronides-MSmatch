@@ -1,4 +1,4 @@
-#################### 3. ms/ms screening ####################
+#################### 4. ms/ms screening for aglycon ####################
 ##################################################################################################
 ####################################### Function to screen ms/ms #################################
 ##################################################################################################
@@ -43,7 +43,7 @@ make_dir <- function(db) {
 }
 
 #Fuction: Match ms with selected m/z 
-msms_match <- function(sps,df_match,db,param, polarity){
+msms_match_aglycon <- function(sps,df_match,db,param, polarity){
      
     # Normalize sps for control samples
     sps_normalized <- addProcessing(sps, norm_int)
@@ -54,9 +54,9 @@ msms_match <- function(sps,df_match,db,param, polarity){
 
     # filter sps with mz
     for(i in seq_len(nrow(df_match))){
-        mz <- df_match$mz[i]
+        mz <- df_match$EA_mz[i]
         id <- df_match$ID[i]
-        rtime <- df_match$rtime[i]
+        rtime <- df_match$EA_rtime[i]
         sps_ms <- filterValues(sps_normalized,
                         spectraVariables = c("precursorMz", "rtime"),
                         values = c(mz,rtime),
@@ -71,11 +71,10 @@ msms_match <- function(sps,df_match,db,param, polarity){
                 message("No hit with mz = ", mz)
             }
             else{write.csv(df_mtch_sub, 
-           here("output", db, paste0("ms2mtch_gluc_", id, ".csv")))}
+           here("output", db, paste0("ms2mtch_aglycon_", id, ".csv")))}
         }
     }
 }
-
 
 # parameters for ms/ms matching
 parm_ms2 <- MatchForwardReverseParam(ppm = 5, requirePrecursor = TRUE,
@@ -88,16 +87,6 @@ query(ah, "MassBank")
 mbank <- ah[["AH116166"]] |>
   Spectra()
 
-# create a subfolder
-path_subfolder <- make_dir(mbank)
-
-# search ms/ms
-## ms1 matched in hmdb
-df_ms1match_gluco_hmdb <- read.csv(here("output","mtches_gluco_hmdb.csv"))
-
-msms_match_gluco <- msms_match(sps_ctrl,df_ms1match_gluco_hmdb,mbank,parm_ms2,polarity = 1)
-
-# ms1 matched in pubchem
-df_ms1match_gluco_pubchem <- read.csv((here("output","mtches_gluco_pubchem.csv")))
-
-msms_match_gluco_pubchem <- msms_match(sps_ctrl,df_ms1match_pubchem,mbank,parm_ms2,polarity = 1)
+# ms1 matched in hmdb
+df_ms1match_hmdb <- read.csv((here("output","mtches_aglycon_hmdb.csv")))
+msms_match_aglycon_hmdb <-msms_match_aglycon(sps_ea,df_ms1match_hmdb,mbank,parm_ms2,polarity = 1)
