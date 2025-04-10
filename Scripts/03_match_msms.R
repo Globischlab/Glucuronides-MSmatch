@@ -1,8 +1,4 @@
-#################### 3. ms/ms screening ####################
-##################################################################################################
-####################################### Function to screen ms/ms #################################
-##################################################################################################
-
+# ---- 03. ms/ms screening   ----
 #Fuction: Normalize intensities
 norm_int <- function(x, ...) {
     maxint <- max(x[, "intensity"], na.rm = TRUE)
@@ -44,48 +40,51 @@ make_dir <- function(db) {
 
 #Fuction: Match ms with selected m/z 
 msms_match <- function(sps,df_match,db,param, polarity){
-     
-    # Normalize sps for control samples
+     # Normalize sps for control samples
+    sub_dir <- deparse(substitute(db))
     sps_normalized <- addProcessing(sps, norm_int)
     sps_normalized <- filterIntensity(sps_normalized, intensity = low_int)
+
     # Normalize sps for libraries
     db <- filterPolarity(db, polarity = polarity)
-    db_normalized <- addProcessing(db,norm_int)
+    db <- addProcessing(db,norm_int)
 
     # filter sps with mz
     for(i in seq_len(nrow(df_match))){
         mz <- df_match$mz[i]
         id <- df_match$ID[i]
-        rtime <- df_match$rtime[i]
+        rtime <- df_match$rt[i]
         sps_ms <- filterValues(sps_normalized,
                         spectraVariables = c("precursorMz", "rtime"),
-                        values = c(mz,rtime),
+                        values = c(mz,rt),
                         tolerance = c(0.005, 20),
                         ppm = c(10,0), match = "all")
         # screen ms/ms
-        if (length(sps_ms)>2){
-            mtch <- matchSpectra(sps_ms, db_normalized, param)
+        sps_agg <- combineSpectra(sps_ms, FUN = maxTic, minProp =5)
+        if (length(sps_ms)>1){
+            mtch <- matchSpectra(sps_ms, db, param)
             mtch_sub <- mtch[whichQuery(mtch)]
             df_mtch_sub <- apply(spectraData(mtch_sub),2,as.character)
             if(length(df_mtch_sub) == 0){
                 message("No hit with mz = ", mz)
             }
             else{write.csv(df_mtch_sub, 
-           here("output", db, paste0("ms2mtch_gluc_", id, ".csv")))}
+                here("output", sub_dir, paste0("ms2mtch_gluc_", id, ".csv")))
+                }
         }
     }
 }
 
 
 # parameters for ms/ms matching
-parm_ms2 <- MatchForwardReverseParam(ppm = 5, requirePrecursor = TRUE,
-                           THRESHFUN = function(x) which(x >= 0.7)
+parm_ms2 <- MatchForwardReverseParam(ppm = 10, requirePrecursor = TRUE,
+                           THRESHFUN = function(x) which(x >= 0.6)
                           #THRESHFUN = select_top_match
                            )
 
 # load library
 query(ah, "MassBank")
-mbank <- ah[["AH116166"]] |>
+mbank <- ah[["AH119519"]] |>
   Spectra()
 
 # create a subfolder

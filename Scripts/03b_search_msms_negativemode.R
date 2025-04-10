@@ -1,7 +1,4 @@
 ######################## 3b. ms/ms screening negative mode only ###################################
-##################################################################################################
-####################################### Function to screen ms/ms #################################
-##################################################################################################
 
 #Fuction: Normalize intensities
 norm_int <- function(x, ...) {
@@ -29,7 +26,7 @@ read_mzml <- function(file_path){
 NL <- 176.0321 # Neutral loss of glucuronid acid
 proton <- 1.00728
 sps_ctrl <- read_mzml(here("data","negative_ionization","ctrl"))
-sps_ctrl <- filterPrecursorMz(sps_crt, c((NL+15),1200))
+sps_ctrl <- filterPrecursorMzRange(sps_crt, c((NL+15),1200))
 
 # negative mode only -- search for glucuronides FPs
 # normalize sps

@@ -1,55 +1,43 @@
-###############################################
-### Load or install packages ##################
-###############################################
+# ---- 00. Install & Load libraries ----
+# cran
+cran_pkgs <- c("here", "dplyr", "tidyr", "pander", "devtools","ggplot2")
 
-# Read session_info.txt (if saved)
-session_text <- readLines("session_info.txt")
+installed <- rownames(installed.packages())
+to_install_cran <- setdiff(cran_pkgs, installed)
+if (length(to_install_cran) > 0) install.packages(to_install_cran)
 
-# Extract package names (regex for "package_name_version")
-pkgs <- gsub(".*([a-zA-Z0-9]+)_[0-9.]+.*", "\\1", session_text)
-pkgs <- unique(pkgs[!grepl("R|locale|attached base", pkgs)])
+# load cran pkg
+lapply(cran_pkgs, library, character.only = TRUE)
 
-if (!require("here")) install.packages("here")
-library(here)
-
-if (!require("pander")) install.packages("pander")
-library(pander)
-
-if (!require("devtools")) install.packages("devtools")
-
-
+# Bioconductor
 if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
-if (!require("mzR")) BiocManager::install("mzR")
 
-if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
-if (!require("AnnotationHub")) BiocManager::install("AnnotationHub")
-library(AnnotationHub)
+bioc_pkgs <- c("BiocParallel", "mzR", "CompoundDb", "MsBackendMgf", 
+               "AnnotationHub", "Spectra","MsBackendMassbank","MetaboAnnotation")
+
+for (pkg in bioc_pkgs) {
+  if (!require(pkg, character.only = TRUE)) {
+    BiocManager::install(pkg, force = TRUE)
+    library(pkg, character.only = TRUE)
+  }
+}
+
+# Load AnnotationHub and set global object
 ah <- AnnotationHub()
 
+# GitHub packages (if not already installed)
+# if (!require("MetaboAnnotation")) {
+#   devtools::install_github("rformassspectrometry/MetaboAnnotation")
+#   library(MetaboAnnotation)
+# }
 
-if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
-if (!require("Spectra")) BiocManager::install("Spectra")
-library(Spectra)
 
-if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
-if (!require("MetaboAnnotation")) BiocManager::install("MetaboAnnotation")
-library(MetaboAnnotation)
-
-if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
-if (!require("MsBackendMassbank")) BiocManager::install("MsBackendMassbank")
-library(MsBackendMassbank)
-
-if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
-if (!require("MsBackendMgf")) BiocManager::install("MsBackendMgf")
-library(MsBackendMgf)
-library(dplyr)
-
-# Set working directory to repo root
+# ---- Set working directory ----
 setwd(here())
-# Verify
-print(paste("Working directory set to:", getwd()))
-if (!dir.exists(here("output"))) {
-  dir.create(here("output"))
-}
+message("Working directory set to: ", getwd())
+
+dir.create(here::here("data","raw"),recursive= TRUE,showWarning = FALSE)
+dir.create(here::here("data","xcms"),recursive= TRUE,showWarning = FALSE)
+dir.create(here::here("output","ms1match"),recursive= TRUE,showWarning = FALSE)
 # Save session info
 writeLines(capture.output(sessionInfo()), "session_info.txt")

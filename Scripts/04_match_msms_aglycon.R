@@ -43,9 +43,9 @@ make_dir <- function(db) {
 }
 
 #Fuction: Match ms with selected m/z 
-msms_match_aglycon <- function(sps,df_match,db,param, polarity){
-     
+msms_match_aglycon <- function(sps,df_match,db,param, polarity){ 
     # Normalize sps for control samples
+    sub_dir <- deparse(substitute(db))
     sps_normalized <- addProcessing(sps, norm_int)
     sps_normalized <- filterIntensity(sps_normalized, intensity = low_int)
     # Normalize sps for libraries
@@ -63,7 +63,8 @@ msms_match_aglycon <- function(sps,df_match,db,param, polarity){
                         tolerance = c(0.005, 20),
                         ppm = c(10,0), match = "all")
         # screen ms/ms
-        if (length(sps_ms)>2){
+        sps_agg <- combineSpectra(sps_ms, FUN = maxTic, minProp =5)
+        if (length(sps_ms)>1){
             mtch <- matchSpectra(sps_ms, db_normalized, param)
             mtch_sub <- mtch[whichQuery(mtch)]
             df_mtch_sub <- apply(spectraData(mtch_sub),2,as.character)
@@ -77,8 +78,9 @@ msms_match_aglycon <- function(sps,df_match,db,param, polarity){
 }
 
 # parameters for ms/ms matching
-parm_ms2 <- MatchForwardReverseParam(ppm = 5, requirePrecursor = TRUE,
-                           THRESHFUN = function(x) which(x >= 0.7)
+parm_ms2 <- MatchForwardReverseParam(ppm = 10, 
+                        requirePrecursor = TRUE,
+                        THRESHFUN = function(x) which(x >= 0.7)
                           #THRESHFUN = select_top_match
                            )
 
