@@ -27,17 +27,26 @@ This project is to build a streamline to identify the glucuronides and its aglyc
    ```
 
 ## data
-- databases: compounds list from hmdb or pubchem
-- negative_ion_mode: raw data for negative ionization mode
-- positive_ion_mode: raw data for positive ionization mode
+- databases: compounds list from hmdb or Pubchem
+
+### raw
+- Negative/: data acquired in Negative ionization mode
+  - Ctrl/: mzML fiels from control samples
+  - EA/: mzML files from EA samples
+- Positive/: data acquired in Positive ionization mode
+  - Ctrl/ mzML fiels from control samples
+  - EA/ mzML files from EA samples
   
 ## Output
 - Tables: "output/"
-  - spectra data
-  - aglycons search in ea data
-  - glucuronides and aglycon search in hmdb and pubchem
-    
+  - Spectra data from Ctrl and EA
+  - Aglycons search in EA data
+  - Glucuronides tentative matches in HMDB and Pubchem
+  - Aglycons tentative matches in HMDB
+  - MS2 spectra contain glucuronide moiety characteristic fragmentation in negative ionization mode
+  
 - MS/MS matched results: "output/db/"
+  - Matches with MS2 levels with MONA
 
 ## Reproducibility
 - R version: See "session_info.txt"

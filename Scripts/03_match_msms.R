@@ -53,7 +53,7 @@ msms_match <- function(sps,df_match,db,param, polarity){
     for(i in seq_len(nrow(df_match))){
         mz <- df_match$mz[i]
         id <- df_match$ID[i]
-        rtime <- df_match$rt[i]
+        rt<- df_match$rt[i]
         sps_ms <- filterValues(sps_normalized,
                         spectraVariables = c("precursorMz", "rtime"),
                         values = c(mz,rt),
